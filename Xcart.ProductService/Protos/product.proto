@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+option csharp_namespace = "XCart.Product.Grpc.Protos";
+
+service ProductProtoService {
+    rpc CreateOrder (PlaceOrderRequest) returns (ReplyModel);    
+    rpc UpdateOrder (UpdateOrderRequest) returns (ReplyModel);  
+}
+
+
+message Product {
+    int32 productId = 1;
+}
+
+message PlaceOrderRequest {
+    string customerId = 1;
+    repeated Product products = 2;
+}
+
+message UpdateOrderRequest {
+    string customerId = 1;
+    string orderId = 2;
+    repeated Product products = 3;
+}
+
+message ReplyModel{
+    string message = 1;
+}

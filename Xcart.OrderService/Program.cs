@@ -1,6 +1,4 @@
-using Xcart.OrderService.Services;
-
-namespace Xcart.OrderService
+namespace XCart.Order.Grpc
 {
     public class Program
     {
@@ -14,7 +12,7 @@ namespace Xcart.OrderService
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
-            app.MapGrpcService<GreeterService>();
+            app.MapGrpcService<Services.OrderService>();
             app.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
 
             app.Run();
