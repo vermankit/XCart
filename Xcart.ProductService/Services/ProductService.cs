@@ -17,6 +17,26 @@ namespace XCart.Product.Grpc.Services
             _orderGrpcService = orderGrpcService;
         }
 
+
+        public override async Task<Products> GetProducts(Params request, ServerCallContext context)
+        {
+            var products = await _repository.GetProducts();
+            var productBufList = products.Select(product => new Protos.Product()
+            {
+                ProductId = product.Id,
+                Color = product.Color,
+                Name = product.Name,
+                Price = product.Price,
+                Quantity = product.Quantity
+            }).ToList();
+
+            var productResponse = new Products()
+            {
+                Products_ = { productBufList }
+            };
+            return await Task.FromResult(productResponse);
+        }
+
         public override async Task<ReplyModel> CreateOrder(PlaceOrderRequest request, ServerCallContext context)
         {
             var productIds = request.Products.Select(product => product.ProductId).ToList();
