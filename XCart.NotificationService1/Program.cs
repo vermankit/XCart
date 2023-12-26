@@ -1,4 +1,8 @@
-using XCart.NotificationService1.Services;
+using EventBus.Messages.Common;
+using EventBus.Messages.Events;
+using MassTransit;
+using RabbitMQ.Client;
+using XCart.NotificationService1.Consumers;
 
 namespace XCart.NotificationService1
 {
@@ -6,18 +10,30 @@ namespace XCart.NotificationService1
     {
         public static void Main(string[] args)
         {
-            var builder = WebApplication.CreateBuilder(args);
+            var builder = Host.CreateApplicationBuilder(args);
 
-            // Add services to the container.
-            builder.Services.AddGrpc();
 
-            var app = builder.Build();
+            builder.Services.AddMassTransit(config =>
+            {
+                config.AddConsumer<OrderPlacedMessageConsumer>();
+                config.UsingRabbitMq((ctx, cfg) =>
+                {
+                    cfg.ReceiveEndpoint(EventBusConstants.OrderPlacedQueue1, c =>
+                    {
+                        c.ConfigureConsumeTopology = false;
+                        c.ConfigureConsumer<OrderPlacedMessageConsumer>(ctx);
+                        c.Bind<OrderPlacedEvent>(s =>
+                        {
+                            s.ExchangeType = ExchangeType.Fanout;
+                        });
+                    });
+                });
+            });
+          
+            builder.Services.AddHostedService<Worker>();
 
-            // Configure the HTTP request pipeline.
-            app.MapGrpcService<GreeterService>();
-            app.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
-
-            app.Run();
+            var host = builder.Build();
+            host.Run();
         }
     }
 }

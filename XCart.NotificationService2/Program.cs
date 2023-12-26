@@ -1,4 +1,8 @@
-using XCart.NotificationService2.Services;
+using EventBus.Messages.Common;
+using EventBus.Messages.Events;
+using MassTransit;
+using RabbitMQ.Client;
+using XCart.NotificationService2.Consumers;
 
 namespace XCart.NotificationService2
 {
@@ -6,18 +10,42 @@ namespace XCart.NotificationService2
     {
         public static void Main(string[] args)
         {
-            var builder = WebApplication.CreateBuilder(args);
+            var builder = Host.CreateApplicationBuilder(args);
 
-            // Add services to the container.
-            builder.Services.AddGrpc();
 
-            var app = builder.Build();
+            builder.Services.AddMassTransit(config =>
+            {
+                config.AddConsumer<OrderPlacedMessageConsumer>();
+                config.AddConsumer<UpdateOrderMessageConsumer>();
+                config.UsingRabbitMq((ctx, cfg) =>
+                {
+                    cfg.ReceiveEndpoint(EventBusConstants.OrderPlacedQueue2, c =>
+                    {
+                        c.ConfigureConsumeTopology = false;
+                        c.ConfigureConsumer<OrderPlacedMessageConsumer>(ctx);
+                        c.Bind<OrderPlacedEvent>(s =>
+                        {
+                            s.ExchangeType = ExchangeType.Fanout;
+                        });
+                        
+                    });
 
-            // Configure the HTTP request pipeline.
-            app.MapGrpcService<GreeterService>();
-            app.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
+                    cfg.ReceiveEndpoint(EventBusConstants.OrderUpdatedQueue, c =>
+                    {
+                        c.ConfigureConsumeTopology = false;
+                        c.ConfigureConsumer<UpdateOrderMessageConsumer>(ctx);
+                        c.Bind<OrderUpdatedEvent>(s =>
+                        {
+                            s.ExchangeType = ExchangeType.Topic;
+                            s.RoutingKey = "order.updated";
+                        });
+                    });
+                });
+            });
+            builder.Services.AddHostedService<Worker>();
 
-            app.Run();
+            var host = builder.Build();
+            host.Run();
         }
     }
 }
