@@ -15,10 +15,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Extensions\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Protobuf Include="..\Xcart.OrderService\Protos\order.proto" GrpcServices="Client">
       <Link>Protos\order.proto</Link>
     </Protobuf>

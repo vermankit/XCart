@@ -57,7 +57,7 @@ namespace XCart.Product.Grpc.Services
             var result = await _orderGrpcService.UpdateOrder(request.CustomerId, productIds, request.OrderId);
             return new ReplyModel
             {
-                Message = result ? "Order Placed" : "Order Failed"
+                Message = result ? "Order Updated" : "Order Failed"
             };
         }
     }
